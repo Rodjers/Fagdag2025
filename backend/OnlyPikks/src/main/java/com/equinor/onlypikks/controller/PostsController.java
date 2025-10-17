@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -116,12 +117,13 @@ public class PostsController {
             @RequestPart(name = "title", required = false) String title,
             @RequestPart(name = "description", required = false) String description,
             @RequestPart(name = "tags", required = false) List<String> tags,
-            @RequestPart(name = "visibility", required = false, defaultValue = "public") String visibility
+            @RequestPart(name = "visibility", required = false) String visibility
     ) {
         AuthContext auth = authService.resolve(authorization)
                 .orElseThrow(() -> new UnauthorizedException("Authentication required"));
 
-        PostVisibility postVisibility = PostVisibility.valueOf(visibility.toUpperCase());
+        String normalizedVisibility = StringUtils.hasText(visibility) ? visibility : "public";
+        PostVisibility postVisibility = PostVisibility.valueOf(normalizedVisibility.toUpperCase());
         String resolvedTitle = StringUtils.hasText(title) ? title : "Untitled post";
         String originalFileName = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "upload.bin";
         PostResponse created = postService.createPost(
