@@ -135,34 +135,74 @@ export async function createPost(
   payload: CreatePostRequest,
   accessToken: string
 ): Promise<Post> {
-  const formData = new FormData();
-  formData.append('file', payload.file);
+  const isFileUpload = typeof File !== 'undefined' && payload.file instanceof File;
+
+  if (isFileUpload) {
+    const formData = new FormData();
+    formData.append('file', payload.file);
+
+    if (payload.title) {
+      formData.append('title', payload.title);
+    }
+
+    if (payload.description !== undefined) {
+      formData.append('description', payload.description);
+    }
+
+    if (payload.tags) {
+      for (const tag of payload.tags) {
+        formData.append('tags', tag);
+      }
+    }
+
+    if (payload.visibility) {
+      formData.append('visibility', payload.visibility);
+    }
+
+    return handleResponse<Post>(
+      await fetch(buildUrl('/posts'), {
+        method: 'POST',
+        headers: {
+          ...jsonHeaders,
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: formData
+      })
+    );
+  }
+
+  const url = new URL('/posts', API_BASE_URL);
 
   if (payload.title) {
-    formData.append('title', payload.title);
+    url.searchParams.set('title', payload.title);
   }
 
   if (payload.description !== undefined) {
-    formData.append('description', payload.description);
+    url.searchParams.set('description', payload.description);
   }
 
   if (payload.tags) {
     for (const tag of payload.tags) {
-      formData.append('tags', tag);
+      url.searchParams.append('tags', tag);
     }
   }
 
   if (payload.visibility) {
-    formData.append('visibility', payload.visibility);
+    url.searchParams.set('visibility', payload.visibility);
   }
 
-  const response = await fetch(buildUrl('/posts'), {
+  if (payload.filename) {
+    url.searchParams.set('filename', payload.filename);
+  }
+
+  const response = await fetch(url.toString(), {
     method: 'POST',
     headers: {
       ...jsonHeaders,
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/octet-stream'
     },
-    body: formData
+    body: payload.file
   });
 
   return handleResponse<Post>(response);

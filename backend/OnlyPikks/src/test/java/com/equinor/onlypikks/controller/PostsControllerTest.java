@@ -18,6 +18,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,5 +57,26 @@ class PostsControllerTest {
                         .param("title", "Sample post"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("invalid_request"));
+    }
+
+    @Test
+    void createPostFromBinaryWithMetadataReturnsCreated() throws Exception {
+        mockMvc.perform(post("/posts")
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer alice")
+                        .queryParam("title", "Binary post")
+                        .queryParam("description", "Uploaded from raw binary")
+                        .queryParam("tags", "raw", "binary")
+                        .queryParam("visibility", "unlisted")
+                        .queryParam("filename", "binary-upload.bin")
+                        .content(new byte[]{1, 2, 3, 4}))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Binary post"))
+                .andExpect(jsonPath("$.description").value("Uploaded from raw binary"))
+                .andExpect(jsonPath("$.tags[0]").value("raw"))
+                .andExpect(jsonPath("$.tags[1]").value("binary"))
+                .andExpect(jsonPath("$.visibility").value("UNLISTED"))
+                .andExpect(jsonPath("$.original_file_name").value("binary-upload.bin"))
+                .andExpect(jsonPath("$.file_size").value(4));
     }
 }
