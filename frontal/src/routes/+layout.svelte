@@ -26,6 +26,7 @@
       <a href="/?sort=popular">Popular</a>
       <a href="/?sort=trending">Trending</a>
       {#if $authStore}
+        <a href="/posts/new" class="create-post">Create post</a>
         <a href="/?owner=me">My posts</a>
       {/if}
     </nav>
@@ -113,6 +114,19 @@
   nav a:focus-visible {
     background: rgba(59, 130, 246, 0.25);
     border-color: rgba(59, 130, 246, 0.45);
+  }
+
+  nav a.create-post {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(236, 72, 153, 0.9));
+    border-color: transparent;
+    color: #f8fafc;
+    font-weight: 600;
+  }
+
+  nav a.create-post:hover,
+  nav a.create-post:focus-visible {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(236, 72, 153, 1));
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.35);
   }
 
   .auth-controls {

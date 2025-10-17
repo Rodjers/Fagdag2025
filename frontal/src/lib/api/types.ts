@@ -87,3 +87,11 @@ export interface LoginRequest {
 export interface CreateCommentRequest {
   text: string;
 }
+
+export interface CreatePostRequest {
+  file: File | Blob;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  visibility?: 'public' | 'unlisted' | 'private';
+}
