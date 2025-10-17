@@ -4,7 +4,7 @@ import com.equinor.onlypikks.api.model.CommentResponse;
 import com.equinor.onlypikks.api.model.CreateCommentRequest;
 import com.equinor.onlypikks.api.model.PagedResponse;
 import com.equinor.onlypikks.auth.AuthContext;
-import com.equinor.onlypikks.auth.MockAuthService;
+import com.equinor.onlypikks.auth.AuthService;
 import com.equinor.onlypikks.exception.ForbiddenException;
 import com.equinor.onlypikks.exception.NotFoundException;
 import com.equinor.onlypikks.exception.UnauthorizedException;
@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.*;
 public class CommentsController {
 
     private final MockPostService postService;
-    private final MockAuthService authService;
+    private final AuthService authService;
 
-    public CommentsController(MockPostService postService, MockAuthService authService) {
+    public CommentsController(MockPostService postService, AuthService authService) {
         this.postService = postService;
         this.authService = authService;
     }
