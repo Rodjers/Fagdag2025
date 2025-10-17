@@ -4,6 +4,7 @@ import type {
   Comment,
   CommentListResponse,
   CreateCommentRequest,
+  CreatePostRequest,
   ErrorResponse,
   ListCommentsParams,
   ListPostsParams,
@@ -127,6 +128,44 @@ export async function getComments(
   });
 
   return handleResponse<CommentListResponse>(response);
+}
+
+export async function createPost(
+  fetch: Fetch,
+  payload: CreatePostRequest,
+  accessToken: string
+): Promise<Post> {
+  const formData = new FormData();
+  formData.append('file', payload.file);
+
+  if (payload.title) {
+    formData.append('title', payload.title);
+  }
+
+  if (payload.description !== undefined) {
+    formData.append('description', payload.description);
+  }
+
+  if (payload.tags) {
+    for (const tag of payload.tags) {
+      formData.append('tags', tag);
+    }
+  }
+
+  if (payload.visibility) {
+    formData.append('visibility', payload.visibility);
+  }
+
+  const response = await fetch(buildUrl('/posts'), {
+    method: 'POST',
+    headers: {
+      ...jsonHeaders,
+      Authorization: `Bearer ${accessToken}`
+    },
+    body: formData
+  });
+
+  return handleResponse<Post>(response);
 }
 
 export async function createComment(
