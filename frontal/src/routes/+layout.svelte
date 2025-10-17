@@ -17,8 +17,8 @@
 <div class="app-shell">
   <header class="card-surface app-header">
     <a class="brand" href="/">
-      <span class="logo" aria-hidden="true">fonudin</span>
-      <span class="title">Fonudin</span>
+      <span class="logo" aria-hidden="true">OnlyPikks</span>
+      <span class="title">OnlyPikks</span>
     </a>
     <nav>
       <a href="/">Feed</a>
@@ -45,7 +45,7 @@
   <footer class="app-footer">
     <p>
       Frontend scaffold for the Posts Service API.
-      <a href="https://api.example.com/health" rel="noreferrer">API health</a>
+      <a href="https://localhost:8080/health" rel="noreferrer">API health</a>
     </p>
   </footer>
 </div>

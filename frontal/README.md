@@ -1,4 +1,4 @@
-# Fonudin frontal
+# OnlyPikks frontal
 
 SvelteKit-based frontend scaffold for the Posts Service API. It consumes the public REST endpoints for feed
 browsing, authentication, post details and comments.
