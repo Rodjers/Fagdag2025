@@ -94,4 +94,5 @@ export interface CreatePostRequest {
   description?: string;
   tags?: string[];
   visibility?: 'public' | 'unlisted' | 'private';
+  filename?: string;
 }

@@ -141,8 +141,12 @@ public class PostsController {
         AuthContext auth = authService.resolve(authorization)
                 .orElseThrow(() -> new UnauthorizedException("Authentication required"));
 
+        if (payload == null || payload.length == 0) {
+            throw new IllegalArgumentException("Binary payload is required");
+        }
+
         String originalFileName = resolveOriginalFileName(filename, filenameHeader, slugHeader, contentDisposition);
-        long fileSize = payload != null ? payload.length : 0L;
+        long fileSize = payload.length;
         PostResponse created = createPostWithMetadata(
                 auth,
                 title,
