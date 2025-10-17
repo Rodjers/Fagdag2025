@@ -11,6 +11,7 @@ import com.equinor.onlypikks.exception.ForbiddenException;
 import com.equinor.onlypikks.exception.NotFoundException;
 import com.equinor.onlypikks.exception.UnauthorizedException;
 import com.equinor.onlypikks.service.MockPostService;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -107,7 +110,7 @@ public class PostsController {
         headers.add("X-RateLimit-Reset", String.valueOf(Instant.now().plusSeconds(60).getEpochSecond()));
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(response);
+                .body(applyAbsoluteUrls(response));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -121,19 +124,44 @@ public class PostsController {
     ) {
         AuthContext auth = authService.resolve(authorization)
                 .orElseThrow(() -> new UnauthorizedException("Authentication required"));
-
-        String normalizedVisibility = StringUtils.hasText(visibility) ? visibility : "public";
-        PostVisibility postVisibility = PostVisibility.valueOf(normalizedVisibility.toUpperCase());
-        String resolvedTitle = StringUtils.hasText(title) ? title : "Untitled post";
-        String originalFileName = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "upload.bin";
-        PostResponse created = postService.createPost(
+        PostResponse created = createPostWithMetadata(
                 auth,
-                resolvedTitle,
+                title,
                 description,
                 tags,
-                postVisibility,
-                originalFileName,
+                visibility,
+                file.getOriginalFilename(),
                 file.getSize()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<PostResponse> createPostFromBinary(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @RequestBody byte[] payload,
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "description", required = false) String description,
+            @RequestParam(name = "tags", required = false) List<String> tags,
+            @RequestParam(name = "visibility", required = false) String visibility,
+            @RequestParam(name = "filename", required = false) String filename,
+            @RequestHeader(value = "X-Filename", required = false) String filenameHeader,
+            @RequestHeader(value = "Slug", required = false) String slugHeader,
+            @RequestHeader(value = HttpHeaders.CONTENT_DISPOSITION, required = false) String contentDisposition
+    ) {
+        AuthContext auth = authService.resolve(authorization)
+                .orElseThrow(() -> new UnauthorizedException("Authentication required"));
+
+        String originalFileName = resolveOriginalFileName(filename, filenameHeader, slugHeader, contentDisposition);
+        long fileSize = payload != null ? payload.length : 0L;
+        PostResponse created = createPostWithMetadata(
+                auth,
+                title,
+                description,
+                tags,
+                visibility,
+                originalFileName,
+                fileSize
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -145,6 +173,7 @@ public class PostsController {
     ) {
         Optional<AuthContext> auth = authService.resolve(authorization);
         return postService.findPost(postId, auth)
+                .map(this::applyAbsoluteUrls)
                 .orElseThrow(() -> new NotFoundException("Post not found or inaccessible"));
     }
 
@@ -163,7 +192,7 @@ public class PostsController {
                 file.getSize()
         );
         if (updated.isPresent()) {
-            return updated.get();
+            return applyAbsoluteUrls(updated.get());
         }
         if (!postService.postExists(postId)) {
             throw new NotFoundException("Post not found");
@@ -181,7 +210,7 @@ public class PostsController {
                 .orElseThrow(() -> new UnauthorizedException("Authentication required"));
         Optional<PostResponse> updated = postService.updateMetadata(postId, auth, request);
         if (updated.isPresent()) {
-            return updated.get();
+            return applyAbsoluteUrls(updated.get());
         }
         if (!postService.postExists(postId)) {
             throw new NotFoundException("Post not found");
@@ -204,5 +233,131 @@ public class PostsController {
             throw new ForbiddenException("You are not allowed to delete this post");
         }
         return ResponseEntity.noContent().build();
+    }
+
+    private PostResponse createPostWithMetadata(
+            AuthContext auth,
+            String title,
+            String description,
+            List<String> tags,
+            String visibility,
+            String originalFileName,
+            long fileSize
+    ) {
+        String normalizedVisibility = StringUtils.hasText(visibility) ? visibility : "public";
+        PostVisibility postVisibility = PostVisibility.valueOf(normalizedVisibility.toUpperCase());
+        String resolvedTitle = StringUtils.hasText(title) ? title : "Untitled post";
+        String resolvedOriginalFileName = StringUtils.hasText(originalFileName) ? originalFileName : "upload.bin";
+        List<String> normalizedTags = normalizeTags(tags);
+        PostResponse created = postService.createPost(
+                auth,
+                resolvedTitle,
+                description,
+                normalizedTags,
+                postVisibility,
+                resolvedOriginalFileName,
+                fileSize
+        );
+        return applyAbsoluteUrls(created);
+    }
+
+    private String resolveOriginalFileName(
+            String explicitFileName,
+            String headerFileName,
+            String slugHeader,
+            String contentDispositionValue
+    ) {
+        if (StringUtils.hasText(explicitFileName)) {
+            return explicitFileName;
+        }
+        if (StringUtils.hasText(headerFileName)) {
+            return headerFileName;
+        }
+        if (StringUtils.hasText(slugHeader)) {
+            return slugHeader;
+        }
+        if (StringUtils.hasText(contentDispositionValue)) {
+            try {
+                ContentDisposition disposition = ContentDisposition.parse(contentDispositionValue);
+                if (StringUtils.hasText(disposition.getFilename())) {
+                    return disposition.getFilename();
+                }
+            } catch (IllegalArgumentException ignored) {
+                // Ignore invalid content disposition headers and fall back to default name.
+            }
+        }
+        return "upload.bin";
+    }
+
+    private List<String> normalizeTags(List<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return tags;
+        }
+        if (tags.size() == 1 && tags.get(0) != null && tags.get(0).contains(",")) {
+            return Arrays.stream(tags.get(0).split(","))
+                    .map(String::trim)
+                    .filter(StringUtils::hasText)
+                    .toList();
+        }
+        return tags;
+    }
+
+    private PagedResponse<PostSummaryResponse> applyAbsoluteUrls(PagedResponse<PostSummaryResponse> response) {
+        List<PostSummaryResponse> normalizedItems = response.items().stream()
+                .map(this::applyAbsoluteUrls)
+                .toList();
+        return new PagedResponse<>(normalizedItems, response.page(), response.perPage(), response.total());
+    }
+
+    private PostSummaryResponse applyAbsoluteUrls(PostSummaryResponse summary) {
+        return new PostSummaryResponse(
+                summary.id(),
+                summary.title(),
+                summary.description(),
+                summary.tags(),
+                summary.visibility(),
+                summary.ownerId(),
+                summary.ownerDisplayName(),
+                ensureAbsoluteUrl(summary.thumbnailUrl()),
+                summary.createdAt(),
+                summary.updatedAt(),
+                summary.commentCount(),
+                summary.likeCount()
+        );
+    }
+
+    private PostResponse applyAbsoluteUrls(PostResponse response) {
+        return new PostResponse(
+                response.id(),
+                response.title(),
+                response.description(),
+                response.tags(),
+                response.visibility(),
+                response.ownerId(),
+                response.ownerDisplayName(),
+                response.fileId(),
+                ensureAbsoluteUrl(response.fileUrl()),
+                ensureAbsoluteUrl(response.thumbnailUrl()),
+                response.originalFileName(),
+                response.fileSize(),
+                response.createdAt(),
+                response.updatedAt(),
+                response.commentCount(),
+                response.likeCount(),
+                response.latestComments()
+        );
+    }
+
+    private String ensureAbsoluteUrl(String url) {
+        if (!StringUtils.hasText(url)) {
+            return url;
+        }
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return url;
+        }
+        String normalizedPath = url.startsWith("/") ? url : "/" + url;
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path(normalizedPath)
+                .toUriString();
     }
 }
