@@ -1,38 +1,33 @@
-# sv
+# OnlyPikks frontal
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit-based frontend scaffold for the Posts Service API. It consumes the public REST endpoints for feed
+browsing, authentication, post details and comments.
 
-## Creating a project
+## Getting started
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+```bash
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+The frontend expects the backend to be available at `https://api.example.com` by default. Override this with a
+`PUBLIC_API_BASE_URL` environment variable at build or runtime:
 
-To create a production version of your app:
-
-```sh
-npm run build
+```bash
+PUBLIC_API_BASE_URL=https://localhost:8080 npm run dev
 ```
 
-You can preview the production build with `npm run preview`.
+## Features
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- Global feed with search, sorting, pagination and an authenticated "My posts" toggle
+- Post detail page with media preview, metadata and dynamic comments
+- Authentication flow wired to `/auth/login`, persisted in local storage with logout support
+- API client helpers and typed models generated from the provided OpenAPI schema
+- Reusable UI components for post cards, grids and comment lists styled with a glassmorphism aesthetic
+
+## Next steps
+
+- Implement post creation, editing and deletion using the multipart endpoints
+- Add token refresh and user profile discovery using `/auth/refresh` and future profile endpoints
+- Introduce routing guards and server hooks to inject JWTs automatically in server-side loads
+- Expand testing coverage with Playwright component tests and contract tests against the API
