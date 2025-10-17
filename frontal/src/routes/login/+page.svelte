@@ -1,7 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { login, ApiError } from '$lib/api/client';
+  import { login, ApiError, getUserInfo } from '$lib/api/client';
   import { authStore } from '$lib/stores/auth';
+  import { userStore } from '$lib/stores/user';
 
   let email = '';
   let password = '';
@@ -16,6 +17,13 @@
     try {
       const tokens = await login(fetch, { email, password });
       authStore.setTokens(tokens);
+
+      try {
+        const user = await getUserInfo(fetch, tokens.access_token);
+        userStore.setUser(user);
+      } catch (userInfoError) {
+        console.warn('Failed to load user info', userInfoError);
+      }
       goto('/', { replaceState: true });
     } catch (err) {
       console.error(err);

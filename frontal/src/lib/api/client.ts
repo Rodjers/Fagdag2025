@@ -9,7 +9,8 @@ import type {
   ListPostsParams,
   LoginRequest,
   Post,
-  PostListResponse
+  PostListResponse,
+  UserInfo
 } from './types';
 
 type Fetch = typeof fetch;
@@ -183,6 +184,23 @@ export async function logout(fetch: Fetch, accessToken?: string): Promise<void> 
   });
 
   await handleResponse<void>(response);
+}
+
+export async function getUserInfo(_fetch: Fetch, _accessToken: string): Promise<UserInfo> {
+  // TODO: replace stubbed response with a real API call when the backend endpoint is ready.
+  console.warn('Using stubbed user info until the /auth/userinfo endpoint is available.');
+
+  return new Promise<UserInfo>((resolve) => {
+    setTimeout(
+      () =>
+        resolve({
+          id: 'user_demo',
+          email: 'demo.user@example.com',
+          name: 'Demo User'
+        }),
+      150
+    );
+  });
 }
 
 export function formatDate(value: string): string {

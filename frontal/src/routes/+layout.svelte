@@ -2,6 +2,7 @@
   import '../app.css';
   import favicon from '$lib/assets/favicon.svg';
   import { authStore } from '$lib/stores/auth';
+  import { userStore } from '$lib/stores/user';
   import { goto } from '$app/navigation';
 
   const handleLogout = async () => {
@@ -30,6 +31,9 @@
     </nav>
     <div class="auth-controls">
       {#if $authStore}
+        {#if $userStore}
+          <span class="user-hint">Signed in as {$userStore.name}</span>
+        {/if}
         <span class="token-hint">Token expires {new Date($authStore.expires_at).toLocaleTimeString()}</span>
         <button type="button" on:click={handleLogout}>Log out</button>
       {:else}
@@ -128,6 +132,12 @@
   .token-hint {
     font-size: 0.8rem;
     color: rgba(226, 232, 240, 0.75);
+  }
+
+  .user-hint {
+    font-size: 0.85rem;
+    color: rgba(226, 232, 240, 0.85);
+    font-weight: 600;
   }
 
   main {

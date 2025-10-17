@@ -11,6 +11,12 @@ export interface AuthTokens {
   expires_in: number;
 }
 
+export interface UserInfo {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export interface PostSummary {
   id: string;
   title: string;
