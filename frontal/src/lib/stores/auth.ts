@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { writable } from 'svelte/store';
 import { logout as apiLogout } from '$lib/api/client';
+import { userStore } from './user';
 import type { AuthTokens } from '$lib/api/types';
 
 type Fetch = typeof fetch;
@@ -57,6 +58,7 @@ function createAuthStore() {
     },
     clear() {
       set(null);
+      userStore.clear();
     },
     get snapshot() {
       return current;
@@ -77,6 +79,7 @@ function createAuthStore() {
         }
       }
       set(null);
+      userStore.clear();
     }
   } satisfies {
     subscribe: typeof subscribe;
