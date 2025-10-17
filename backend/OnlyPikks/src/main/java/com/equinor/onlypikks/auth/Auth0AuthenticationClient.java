@@ -57,6 +57,10 @@ public class Auth0AuthenticationClient {
         payload.put("client_id", properties.clientId());
         payload.put("client_secret", properties.clientSecret());
         payload.put("scope", properties.defaultScopeOrFallback());
+        String realm = properties.connectionOrDefault();
+        if (StringUtils.hasText(realm)) {
+            payload.put("realm", realm);
+        }
 
         return exchangeForTokens(payload, "Invalid credentials");
     }
