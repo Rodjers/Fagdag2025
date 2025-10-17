@@ -3,7 +3,7 @@ package com.equinor.onlypikks.controller;
 import com.equinor.onlypikks.api.model.AuthTokensResponse;
 import com.equinor.onlypikks.api.model.LoginRequest;
 import com.equinor.onlypikks.api.model.RefreshTokenRequest;
-import com.equinor.onlypikks.auth.MockAuthService;
+import com.equinor.onlypikks.auth.AuthService;
 import com.equinor.onlypikks.exception.UnauthorizedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -23,9 +23,9 @@ import java.util.UUID;
 public class AuthController {
 
     private static final Duration ACCESS_TOKEN_TTL = Duration.ofHours(1);
-    private final MockAuthService authService;
+    private final AuthService authService;
 
-    public AuthController(MockAuthService authService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 

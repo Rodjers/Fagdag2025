@@ -6,7 +6,7 @@ import com.equinor.onlypikks.api.model.PostSummaryResponse;
 import com.equinor.onlypikks.api.model.PostVisibility;
 import com.equinor.onlypikks.api.model.UpdatePostMetadataRequest;
 import com.equinor.onlypikks.auth.AuthContext;
-import com.equinor.onlypikks.auth.MockAuthService;
+import com.equinor.onlypikks.auth.AuthService;
 import com.equinor.onlypikks.exception.ForbiddenException;
 import com.equinor.onlypikks.exception.NotFoundException;
 import com.equinor.onlypikks.exception.UnauthorizedException;
@@ -39,9 +39,9 @@ import java.util.Optional;
 public class PostsController {
 
     private final MockPostService postService;
-    private final MockAuthService authService;
+    private final AuthService authService;
 
-    public PostsController(MockPostService postService, MockAuthService authService) {
+    public PostsController(MockPostService postService, AuthService authService) {
         this.postService = postService;
         this.authService = authService;
     }
