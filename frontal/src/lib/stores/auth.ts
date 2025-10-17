@@ -5,7 +5,7 @@ import type { AuthTokens } from '$lib/api/types';
 
 type Fetch = typeof fetch;
 
-const STORAGE_KEY = 'fonudin_auth_state';
+const STORAGE_KEY = 'onlypikks_auth_state';
 
 export interface AuthState extends AuthTokens {
   /**
