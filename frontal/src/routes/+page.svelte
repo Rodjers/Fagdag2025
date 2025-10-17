@@ -144,7 +144,7 @@
 </script>
 
 <section class="hero card-surface">
-  <h1>Discover the Fonudin feed</h1>
+  <h1>Discover the OnlyPikks feed</h1>
   <p>
     Browse the latest uploads, filter by visibility and search by tags, title or description. Switch to
     <strong>My posts</strong> to manage your own uploads once you are logged in.
