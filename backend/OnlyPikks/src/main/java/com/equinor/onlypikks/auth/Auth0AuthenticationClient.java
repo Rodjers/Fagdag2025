@@ -97,7 +97,7 @@ public class Auth0AuthenticationClient {
         } catch (HttpStatusCodeException ex) {
             throw new UnauthorizedException(resolveErrorMessage("Unable to logout", ex));
         } catch (RestClientException ex) {
-            throw new UnauthorizedException("Unable to reach authentication service");
+            throw new UnauthorizedException(buildConnectivityError("Unable to reach authentication service", ex));
         }
     }
 
@@ -125,7 +125,7 @@ public class Auth0AuthenticationClient {
             }
             throw new IllegalStateException(resolveErrorMessage("Unable to register user", ex));
         } catch (RestClientException ex) {
-            throw new IllegalStateException("Unable to reach authentication service");
+            throw new IllegalStateException(buildConnectivityError("Unable to reach authentication service", ex));
         }
     }
 
@@ -153,8 +153,19 @@ public class Auth0AuthenticationClient {
         } catch (HttpStatusCodeException ex) {
             throw new UnauthorizedException(resolveErrorMessage(fallbackError, ex));
         } catch (RestClientException ex) {
-            throw new UnauthorizedException("Unable to reach authentication service");
+            throw new UnauthorizedException(buildConnectivityError("Unable to reach authentication service", ex));
         }
+    }
+
+    private String buildConnectivityError(String fallback, RestClientException ex) {
+        Throwable cause = ex.getMostSpecificCause();
+        if (cause != null && StringUtils.hasText(cause.getMessage())) {
+            return fallback + ": " + cause.getMessage();
+        }
+        if (StringUtils.hasText(ex.getMessage())) {
+            return fallback + ": " + ex.getMessage();
+        }
+        return fallback;
     }
 
     private AuthTokensResponse buildMockTokenResponse() {
