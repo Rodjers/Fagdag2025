@@ -19,19 +19,19 @@ public class ApiExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("not_found", ex.getMessage()));
+                .body(new ErrorResponse("not_found", ex.getMessage(), null));
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErrorResponse("forbidden", ex.getMessage()));
+                .body(new ErrorResponse("forbidden", ex.getMessage(), null));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse("unauthorized", ex.getMessage()));
+                .body(new ErrorResponse("unauthorized", ex.getMessage(), null));
     }
 
     @ExceptionHandler({
@@ -41,13 +41,13 @@ public class ApiExceptionHandler {
     })
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("invalid_request", ex.getMessage()));
+                .body(new ErrorResponse("invalid_request", ex.getMessage(), null));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         String reference = UUID.randomUUID().toString();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("internal_error", "Unexpected error. Reference: " + reference));
+                .body(new ErrorResponse("internal_error", "Unexpected error. Reference: " + reference, reference));
     }
 }

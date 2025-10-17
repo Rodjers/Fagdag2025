@@ -3,6 +3,7 @@ package com.equinor.onlypikks.controller;
 import com.equinor.onlypikks.api.model.AuthTokensResponse;
 import com.equinor.onlypikks.api.model.LoginRequest;
 import com.equinor.onlypikks.api.model.RefreshTokenRequest;
+import com.equinor.onlypikks.auth.MockAuthService;
 import com.equinor.onlypikks.exception.UnauthorizedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -11,6 +12,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
@@ -21,6 +23,11 @@ import java.util.UUID;
 public class AuthController {
 
     private static final Duration ACCESS_TOKEN_TTL = Duration.ofHours(1);
+    private final MockAuthService authService;
+
+    public AuthController(MockAuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AuthTokensResponse> login(@RequestBody LoginRequest request) {
@@ -39,7 +46,11 @@ public class AuthController {
     }
 
     @PostMapping(path = "/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization
+    ) {
+        authService.resolve(authorization)
+                .orElseThrow(() -> new UnauthorizedException("Not authenticated or token missing/invalid"));
         return ResponseEntity.noContent().build();
     }
 
