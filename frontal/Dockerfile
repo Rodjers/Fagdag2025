@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for SvelteKit (Vite) app - static export served by Nginx
+# Multi-stage Dockerfile for SvelteKit (Vite) app using preview server
 
 # ===== Build stage =====
 FROM node:20-alpine AS build
@@ -12,43 +12,24 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY . .
 
-# Build to static assets; for SvelteKit, we rely on adapter-auto which produces client assets via Vite
+# Build application (produces .svelte-kit/output)
 RUN npm run build
 
-# ===== Runtime stage =====
-FROM nginx:1.27-alpine AS runtime
+# ===== Runtime stage (Node + vite preview) =====
+FROM node:20-alpine AS runtime
 
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
 
-# Remove default Nginx static content
-RUN rm -rf ./*
+# Copy built output and dependencies from build stage
+COPY --from=build /app/.svelte-kit ./.svelte-kit
+COPY --from=build /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
 
-# Copy built static assets
-COPY --from=build /app/dist ./
+EXPOSE 8080
 
-# Basic Nginx config for single-page app routing
-COPY <<EOF /etc/nginx/conf.d/default.conf
-server {
-    listen 80;
-    server_name _;
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget -qO- http://localhost:8080/ > /dev/null || exit 1
 
-    root   /usr/share/nginx/html;
-    index  index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location ~* \.(?:ico|css|js|gif|jpe?g|png|svg|woff2?)$ {
-        expires 1y;
-        access_log off;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-
-EXPOSE 80
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget -qO- http://localhost/ > /dev/null || exit 1
+# Use vite preview to serve the production build
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "8080"]
 
 
